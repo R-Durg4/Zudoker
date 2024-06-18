@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zudoker</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/images/pinkbg.webp');
+            background-size: cover;
+            background-position: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            grid-template-rows: repeat(9, 40px);
+            gap: 0;
+            border: 3px solid black;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .cell:nth-child(3n+1) {
+            border-left: 3px solid black;
+        }
+        .cell:nth-child(3n) {
+            border-right: 3px solid black;
+        }
+        .cell:nth-of-type(20),
+        .cell:nth-of-type(21),
+        .cell:nth-of-type(22),
+        .cell:nth-of-type(23),
+        .cell:nth-of-type(24),
+        .cell:nth-of-type(25),
+        .cell:nth-of-type(26),
+        .cell:nth-of-type(27),
+        .cell:nth-of-type(19) 
+        {
+            border-bottom: 3px solid black;
+        }
+        .cell:nth-of-type(29),
+        .cell:nth-of-type(30),
+        .cell:nth-of-type(32),
+        .cell:nth-of-type(33),
+        .cell:nth-of-type(34),
+        .cell:nth-of-type(35),
+        .cell:nth-of-type(36),
+        .cell:nth-of-type(28),
+        .cell:nth-of-type(31) 
+        {
+            border-top: 3px solid black;
+        }
+        .cell:nth-of-type(46),
+        .cell:nth-of-type(47),
+        .cell:nth-of-type(48),
+        .cell:nth-of-type(49),
+        .cell:nth-of-type(50),
+        .cell:nth-of-type(51),
+        .cell:nth-of-type(52),
+        .cell:nth-of-type(53),
+        .cell:nth-of-type(54) 
+        {
+            border-bottom: 3px solid black;
+        }
+        .cell:nth-of-type(55),
+        .cell:nth-of-type(56),
+        .cell:nth-of-type(57),
+        .cell:nth-of-type(58),
+        .cell:nth-of-type(59),
+        .cell:nth-of-type(60),
+        .cell:nth-of-type(61),
+        .cell:nth-of-type(62),
+        .cell:nth-of-type(63) 
+        {
+            border-top: 3px solid black;
+        }
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Space between the buttons */
+        }
+    </style>
+</head>
+<body>
+    <h1>Sudoku Solver</h1>
+    <h3>Enter your grid and let us solve it for you ;)</h3>
+    <form id="sudokuForm" method="post" action="/solve/">
+        {% csrf_token %}
+        <div class="grid">
+            {% for row in range_9 %}
+                {% for col in range_9 %}
+                    <input type="text" class="cell" name="cell-{{ row }}-{{ col }}" maxlength="1">
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="buttons">
+            <button type="submit">Solve</button>
+            <button type="reset">Reset</button>
+        </div>
+    </form>
+    <script>
+        function solveSudoku(event) {
+            event.preventDefault();
+            const form = document.getElementById('sudokuForm');
+            const formData = new FormData(form);
+            let puzzle = '';
+            for (let row = 0; row < 9; row++) {
+                let rowStr = '';
+                for (let col = 0; col < 9; col++) {
+                    let cellValue = formData.get(`cell-${row}-${col}`) || '0';
+                    rowStr += cellValue + ' ';
+                }
+                puzzle += rowStr.trim() + '\n';
+            }
+            fetch('/solve/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: 'puzzle=' + encodeURIComponent(puzzle)
+            })
+            .then(response => response.json())
+            .then(data => {
+                let solution = data.solution;
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        form[`cell-${row}-${col}`].value = solution[row][col] || '';
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        document.getElementById('sudokuForm').addEventListener('submit', solveSudoku);
+    </script>
+</body>
+</html>
